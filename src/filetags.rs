@@ -1,19 +1,18 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::ffi::{OsStr, OsString};
+// use std::ffi::{OsStr, OsString};
 
 // static YYYY_MM_DD_PATTERN:: &str Regex = Regex::new("^(\\d{4})([01]\\d)([0123]\\d)[- _T]").unwrap();
 
 use std::path::Path;
-// use std::ffi::OsStr;
-use std::error::Error;
-use std::str::Split;
-use std::iter;
+// use std::error::Error;
+// use std::iter;
+use std::fmt;
 use std::collections::{HashSet,HashMap};
 
 use time::macros::{date, format_description};
 use time::Date;
-use time::error::Parse;
+// use time::error::Parse;
 
 static FILENAME_DATE_SEPARATOR: &str = "--";
 static FILENAME_TAG_SEPARATOR: &str = "__";
@@ -22,7 +21,7 @@ static CONTROLLED_VOCABULARY_FILENAME: &str = ".filetags";
 
 pub struct TaggedFile {
     head: String,
-    date_id: Option<Date>,
+    date_id_option: Option<Date>,
     name: String,
     tags: Vec<String>,
     exts: String,
@@ -34,16 +33,19 @@ impl TaggedFile {
 
         // %Y%m%dT%H%M%S
         let date_format = format_description!("[year][month][day]T[hour][minute][second]");
-        let date_id = Date::parse(date_str.as_str(), &date_format).ok();
+        let date_id_option = Date::parse(date_str.as_str(), &date_format).ok();
 
-        let tags: Vec<String> = tags_str
-            .split(BETWEEN_TAG_SEPARATOR)
+        let tags: Vec<String> = if tags_str == "" {
+            Vec::new()
+        } else {
+            tags_str.split(BETWEEN_TAG_SEPARATOR)
             .map(|tag_str| String::from(tag_str))
-            .collect();
+            .collect()
+        };
 
         TaggedFile {
             head,
-            date_id,
+            date_id_option,
             name,
             tags,
             exts,
@@ -58,13 +60,52 @@ impl TaggedFile {
         tagname_option.map(|s| self.tags.contains(&String::from(s)))
             .unwrap_or(false)
     }
+
+    pub fn add_tag(&mut self, tag: &str) {
+        let tag_str = String::from(tag);
+        if !self.contains_tag(Some(&tag_str)) {
+            self.tags.push(tag_str);
+        }
+    }
+
+    pub fn remove_tag(&mut self, tag: &str) {
+        let tag_str = String::from(tag);
+        self.tags.retain(|s| *s != tag_str);
+    }
 }
 
-fn is_lnk_file(filename: &str) -> bool {
-    let filepath = Path::new(filename);
-    filepath.extension()
-        .map(|ext| ext.to_ascii_uppercase() == "LNK")
-        .unwrap_or(false)
+impl fmt::Display for TaggedFile {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut output = String::new();
+        if self.head != "" {
+            output.push_str(&(self.head.clone() + "/"));
+        }
+
+        let date_format = format_description!("[year][month][day]T[hour][minute][second]");
+        let date_str = self.date_id_option
+            .map(|di| di.format(&date_format).ok())
+            .flatten()
+            .unwrap_or("".to_string());
+
+        if date_str != "" {
+            output.push_str(&(date_str + FILENAME_DATE_SEPARATOR));
+        }
+
+        output.push_str(&self.name);
+
+        if !self.tags.is_empty() {
+            output.push_str(FILENAME_TAG_SEPARATOR);
+            output.push_str(&self.tags.join(BETWEEN_TAG_SEPARATOR));
+        }
+
+        output.push_str(&self.exts);
+
+        write!(
+            f,
+            "{}",
+            output
+        )
+    }
 }
 
 /// Return separate strings for a given filename.
@@ -90,17 +131,6 @@ fn split_filename(filename: &str) -> Result<(String, String, String), &str> {
         <&str>::try_from(dirname)?.to_string(),
         <&str>::try_from(basename)?.to_string()
     ))
-}
-*/
-
-/*
-pub fn contains_tag(filename: &str, tagname: Option<&str>) -> bool {
-    let tags = extract_tags_from_filename(filename);
-
-    match tagname {
-        Some(name) => tags.contains(&String::from(name)),
-        None => !tags.is_empty()
-    }
 }
 */
 

@@ -7,7 +7,7 @@ mod tests {
     mod test_contains_tag {
         use crate::filetags::TaggedFile;
         #[test]
-        fn detects_single_tag() {
+        fn detects_tag_foo() {
             // contains_tag should detect a tag when the file name
             // contains that singluar tag.
             let tagged_file = TaggedFile::new("Some-file-name__foo.jpeg");
@@ -15,7 +15,7 @@ mod tests {
         }
 
         #[test]
-        fn detects_single_tag_among_multiple() {
+        fn detects_tag_foo_among_multiple() {
             // contains_tag should detect a tag, especially when
             // is the first tag among multiple tags.
             let tagged_file = TaggedFile::new("Some-file-name__foo_bar.jpeg");
@@ -23,7 +23,7 @@ mod tests {
         }
 
         #[test]
-        fn detects_single_tag_even_if_last() {
+        fn detects_single_tag_foo_even_if_last() {
             // contains_tag should detect tag even if it is the last
             // tag in the tags of a file name.
             let tagged_file = TaggedFile::new("Some-file-name__bar_foo.jpeg");
@@ -31,7 +31,7 @@ mod tests {
         }
 
         #[test]
-        fn does_not_detect_tag_substring() {
+        fn does_not_detect_tag_substring_foo() {
             // contains_tag should not detect the tag just because it is
             // the substring of a tag in a file name.
             let tagged_file = TaggedFile::new("Some-file-name__foobar.jpeg");
@@ -39,7 +39,7 @@ mod tests {
         }
 
         #[test]
-        fn does_not_detect_tag() {
+        fn does_not_detect_tag_bar() {
             // contains_tag should not detect bar if it is not present
             // inside a tags list in a file name.
             let tagged_file = TaggedFile::new("Some-file-name__foo.jpeg");
@@ -47,7 +47,7 @@ mod tests {
         }
 
         #[test]
-        fn does_not_detect_tag_2() {
+        fn does_not_detect_tag_foo() {
             // contains_tag should not detect foo if it is not present
             // inside a tags list in a file name.
             let tagged_file = TaggedFile::new("Some-foo-file-name__bar.jpeg");
@@ -75,4 +75,68 @@ mod tests {
         assert!(contains_tag("Some file name--foo bar.jpeg.lnk"));
         assert!(contains_tag("Some file name.jpeg.lnk"));
         */
+
+    mod test_add_tag {
+        use crate::filetags::TaggedFile;
+        use std::fmt::Write;
+
+        #[test]
+        fn adds_tag_bar() {
+            let mut output = String::new();
+            let mut tagged_file = TaggedFile::new("Some-file-name.jpeg");
+            tagged_file.add_tag("bar");
+            write!(&mut output, "{}", tagged_file).expect("Failed to write to output");
+            assert_eq!("Some-file-name__bar.jpeg", output);
+        }
+
+        #[test]
+        fn adds_second_tag_bar() {
+            let mut output = String::new();
+            let mut tagged_file = TaggedFile::new("Some-file-name__foo.jpeg");
+            tagged_file.add_tag("bar");
+            write!(&mut output, "{}", tagged_file).expect("Failed to write to output");
+            assert_eq!("Some-file-name__foo_bar.jpeg", output);
+        }
+
+        #[test]
+        fn adds_tag_foo_once() {
+            let mut output = String::new();
+            let mut tagged_file = TaggedFile::new("Some-file-name__foo.jpeg");
+            tagged_file.add_tag("foo");
+            write!(&mut output, "{}", tagged_file).expect("Failed to write to output");
+            assert_eq!("Some-file-name__foo.jpeg", output);
+        }
+    }
+
+    mod test_remove_tag {
+        use crate::filetags::TaggedFile;
+        use std::fmt::Write;
+
+        #[test]
+        fn removes_tag_bar() {
+            let mut output = String::new();
+            let mut tagged_file = TaggedFile::new("Some-file-name__bar.jpeg");
+            tagged_file.remove_tag("bar");
+            write!(&mut output, "{}", tagged_file).expect("Failed to write to output");
+            assert_eq!("Some-file-name.jpeg", output);
+        }
+
+        #[test]
+        fn removes_tag_bar_among_multiple_tags() {
+            let mut output = String::new();
+            let mut tagged_file = TaggedFile::new("Some-file-name__foo_bar.jpeg");
+            tagged_file.remove_tag("bar");
+            write!(&mut output, "{}", tagged_file).expect("Failed to write to output");
+            assert_eq!("Some-file-name__foo.jpeg", output);
+        }
+
+        #[test]
+        fn does_not_remove_nonexistent_tag_foo() {
+            let mut output = String::new();
+            let mut tagged_file = TaggedFile::new("Some-file-name__bar.jpeg");
+            tagged_file.remove_tag("foo");
+            write!(&mut output, "{}", tagged_file).expect("Failed to write to output");
+            assert_eq!("Some-file-name__bar.jpeg", output);
+        }
+    }
 }
