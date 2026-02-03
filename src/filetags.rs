@@ -9,20 +9,62 @@ use std::path::Path;
 use std::error::Error;
 use std::str::Split;
 use std::iter;
-use std::iter::Peekable;
-use std::collections::HashMap;
+use std::collections::{HashSet,HashMap};
+
+use time::macros::{date, format_description};
+use time::Date;
+use time::error::Parse;
 
 static FILENAME_DATE_SEPARATOR: &str = "--";
 static FILENAME_TAG_SEPARATOR: &str = "__";
 static BETWEEN_TAG_SEPARATOR: &str = "_";
 static CONTROLLED_VOCABULARY_FILENAME: &str = ".filetags";
 
+pub struct TaggedFile {
+    head: String,
+    date_id: Option<Date>,
+    name: String,
+    tags: Vec<String>,
+    exts: String,
+}
+
+impl TaggedFile {
+    pub fn new(filename: &str) -> Self {
+        let (head, date_str, name, tags_str, exts) = split_into_components(filename);
+
+        // %Y%m%dT%H%M%S
+        let date_format = format_description!("[year][month][day]T[hour][minute][second]");
+        let date_id = Date::parse(date_str.as_str(), &date_format).ok();
+
+        let tags: Vec<String> = tags_str
+            .split(BETWEEN_TAG_SEPARATOR)
+            .map(|tag_str| String::from(tag_str))
+            .collect();
+
+        TaggedFile {
+            head,
+            date_id,
+            name,
+            tags,
+            exts,
+        }
+    }
+
+    pub fn is_lnk_file(&self) -> bool {
+        self.exts[self.exts.len() - 3..].to_ascii_uppercase() == "LNK"
+    }
+
+    pub fn contains_tag(&self, tagname_option: Option<&str>) -> bool {
+        tagname_option.map(|s| self.tags.contains(&String::from(s)))
+            .unwrap_or(false)
+    }
+}
+
 fn is_lnk_file(filename: &str) -> bool {
     let filepath = Path::new(filename);
-    match filepath.extension() {
-        Some(ext) => ext.to_ascii_uppercase() == "LNK",
-        None => false
-    }
+    filepath.extension()
+        .map(|ext| ext.to_ascii_uppercase() == "LNK")
+        .unwrap_or(false)
 }
 
 /// Return separate strings for a given filename.
@@ -51,6 +93,7 @@ fn split_filename(filename: &str) -> Result<(String, String, String), &str> {
 }
 */
 
+/*
 pub fn contains_tag(filename: &str, tagname: Option<&str>) -> bool {
     let tags = extract_tags_from_filename(filename);
 
@@ -59,10 +102,17 @@ pub fn contains_tag(filename: &str, tagname: Option<&str>) -> bool {
         None => !tags.is_empty()
     }
 }
+*/
 
 // Returns the date, name, and tags of a file name
-pub fn split_into_components(filename: &str) -> (String, String, String) {
+pub fn split_into_components(filename: &str) -> (String, String, String, String, String) {
     let filepath = Path::new(filename);
+
+    let head_str = filepath.parent()
+        .map(|p| p.to_str())
+        .flatten()
+        .map(|s| String::from(s))
+        .unwrap_or(String::from(""));
 
     let basename = filepath.file_name()
         .map(|s| s.to_str())
@@ -70,7 +120,7 @@ pub fn split_into_components(filename: &str) -> (String, String, String) {
         .unwrap_or("");
 
     if basename == "" {
-        return (String::from(""), String::from(""), String::from(""));
+        return (head_str, String::from(""), String::from(""), String::from(""), String::from(""));
     }
 
     let first_dot_ndx = basename.find(".")
@@ -99,9 +149,12 @@ pub fn split_into_components(filename: &str) -> (String, String, String) {
 
     let tags_str = String::from(&basename[tags_start_ndx..first_dot_ndx]);
 
-    (date_str, name_str, tags_str)
+    let exts_str = String::from(&basename[first_dot_ndx..]);
+
+    (head_str, date_str, name_str, tags_str, exts_str)
 }
 
+/*
 pub fn extract_tags_from_filename(filename: &str) -> Vec<String> {
     let (_, _, tags) = split_into_components(filename);
 
@@ -109,6 +162,7 @@ pub fn extract_tags_from_filename(filename: &str) -> Vec<String> {
         .map(&String::from)
         .collect()
 }
+*/
 
 pub fn add_tag_to_countmap(tag: &str, tagmap: &mut HashMap<String, u32>) {
     let tag_string = String::from(tag);
