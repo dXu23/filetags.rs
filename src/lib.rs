@@ -1,4 +1,3 @@
-
 pub mod filetags;
 
 #[cfg(test)]
@@ -137,6 +136,72 @@ mod tests {
             tagged_file.remove_tag("foo");
             write!(&mut output, "{}", tagged_file).expect("Failed to write to output");
             assert_eq!("Some-file-name__bar.jpeg", output);
+        }
+    }
+
+    mod test_add_tag_to_countmap {
+        use crate::filetags::add_tag_to_countmap;
+        use std::collections::HashMap;
+
+        #[test]
+        fn adds_entry_tag() {
+            let mut tags_expected: HashMap<String, u32> = HashMap::new();
+            tags_expected.insert("tag".to_string(), 1);
+
+            let mut tags_actual = HashMap::new();
+
+            add_tag_to_countmap(&mut tags_actual, "tag");
+            assert_eq!(tags_expected, tags_actual);
+        }
+
+        #[test]
+        fn increments_entry_tag_if_already_exists() {
+            let mut tags_expected: HashMap<String, u32> = HashMap::new();
+            tags_expected.insert("tag".to_string(), 1);
+
+            let mut tags_actual = HashMap::new();
+            tags_actual.insert("tag".to_string(), 0);
+
+            add_tag_to_countmap(&mut tags_actual, "tag");
+            assert_eq!(tags_expected, tags_actual);
+        }
+
+        #[test]
+        fn increments_entry_tag_if_one() {
+            let mut tags_expected: HashMap<String, u32> = HashMap::new();
+            tags_expected.insert("tag".to_string(), 2);
+
+            let mut tags_actual = HashMap::new();
+            tags_actual.insert("tag".to_string(), 1);
+
+            add_tag_to_countmap(&mut tags_actual, "tag");
+            assert_eq!(tags_expected, tags_actual);
+        }
+
+        #[test]
+        fn adds_new_tag() {
+            let mut tags_expected: HashMap<String, u32> = HashMap::new();
+            tags_expected.insert("oldtag".to_string(), 1);
+            tags_expected.insert("newtag".to_string(), 1);
+
+            let mut tags_actual = HashMap::new();
+            tags_actual.insert("oldtag".to_string(), 1);
+
+            add_tag_to_countmap(&mut tags_actual, "newtag");
+            assert_eq!(tags_expected, tags_actual);
+        }
+
+        #[test]
+        fn adds_new_tag_when_old_tag_is_two() {
+            let mut tags_expected: HashMap<String, u32> = HashMap::new();
+            tags_expected.insert("oldtag".to_string(), 2);
+            tags_expected.insert("newtag".to_string(), 1);
+
+            let mut tags_actual = HashMap::new();
+            tags_actual.insert("oldtag".to_string(), 2);
+
+            add_tag_to_countmap(&mut tags_actual, "newtag");
+            assert_eq!(tags_expected, tags_actual);
         }
     }
 }

@@ -194,8 +194,7 @@ pub fn extract_tags_from_filename(filename: &str) -> Vec<String> {
 }
 */
 
-pub fn add_tag_to_countmap(tag: &str, tagmap: &mut HashMap<String, u32>) {
+pub fn add_tag_to_countmap(tagmap: &mut HashMap<String, u32>, tag: &str) {
     let tag_string = String::from(tag);
-
     tagmap.entry(tag_string).and_modify(|count| *count += 1).or_insert(1);
 }
