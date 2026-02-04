@@ -1,0 +1,5 @@
+#+TITLE: filetags.rs
+
+filetags.rs is meant to be another version of Karl Voit's [[https://github.com/novoid/filetags/tree/master][filetags]]
+software, except that it uses the file name format of Protesilaos's
+[[https://github.com/protesilaos/denote][Denote]]. At the moment, the repo is very incomplete.
