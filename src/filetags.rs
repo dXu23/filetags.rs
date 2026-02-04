@@ -14,6 +14,8 @@ use time::macros::{date, format_description};
 use time::Date;
 // use time::error::Parse;
 
+use similar::get_close_matches;
+
 static FILENAME_DATE_SEPARATOR: &str = "--";
 static FILENAME_TAG_SEPARATOR: &str = "__";
 static BETWEEN_TAG_SEPARATOR: &str = "_";
@@ -194,7 +196,16 @@ pub fn extract_tags_from_filename(filename: &str) -> Vec<String> {
 }
 */
 
-pub fn add_tag_to_countmap(tagmap: &mut HashMap<String, u32>, tag: &str) {
+pub fn add_tag_to_countmap(tag: &str, tagmap: &mut HashMap<String, u32>) {
     let tag_string = String::from(tag);
     tagmap.entry(tag_string).and_modify(|count| *count += 1).or_insert(1);
+}
+
+pub fn find_similar_tags(tag: &str, tags: &[&str]) -> Vec<String> {
+    let similar_tags = get_close_matches(tag, tags, 999, 0.7);
+
+    similar_tags.into_iter()
+        .filter(|s| *s != tag)
+        .map(|s| s.to_string())
+        .collect()
 }

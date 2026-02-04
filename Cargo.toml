@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 lazy_static = "1.5.0"
 regex = "1.11.1"
+similar = { version = "2.7.0", features = ["text"] }
 time = { version = "0.3.46", features = ["formatting", "macros", "parsing"] }

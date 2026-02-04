@@ -150,7 +150,7 @@ mod tests {
 
             let mut tags_actual = HashMap::new();
 
-            add_tag_to_countmap(&mut tags_actual, "tag");
+            add_tag_to_countmap("tag", &mut tags_actual);
             assert_eq!(tags_expected, tags_actual);
         }
 
@@ -162,7 +162,7 @@ mod tests {
             let mut tags_actual = HashMap::new();
             tags_actual.insert("tag".to_string(), 0);
 
-            add_tag_to_countmap(&mut tags_actual, "tag");
+            add_tag_to_countmap("tag", &mut tags_actual);
             assert_eq!(tags_expected, tags_actual);
         }
 
@@ -174,7 +174,7 @@ mod tests {
             let mut tags_actual = HashMap::new();
             tags_actual.insert("tag".to_string(), 1);
 
-            add_tag_to_countmap(&mut tags_actual, "tag");
+            add_tag_to_countmap("tag", &mut tags_actual);
             assert_eq!(tags_expected, tags_actual);
         }
 
@@ -187,7 +187,7 @@ mod tests {
             let mut tags_actual = HashMap::new();
             tags_actual.insert("oldtag".to_string(), 1);
 
-            add_tag_to_countmap(&mut tags_actual, "newtag");
+            add_tag_to_countmap("newtag", &mut tags_actual);
             assert_eq!(tags_expected, tags_actual);
         }
 
@@ -200,8 +200,42 @@ mod tests {
             let mut tags_actual = HashMap::new();
             tags_actual.insert("oldtag".to_string(), 2);
 
-            add_tag_to_countmap(&mut tags_actual, "newtag");
+            add_tag_to_countmap("newtag", &mut tags_actual);
             assert_eq!(tags_expected, tags_actual);
+        }
+    }
+
+    mod test_find_similar_tags {
+        use crate::filetags::find_similar_tags;
+
+        #[test]
+        fn finds_no_similar_tags_when_different() {
+            let tag_list = [
+                "foobar", "bar", "baz", "Frankenstein", "parabol",
+                "Bah", "paR", "por", "Schneewittchen"
+            ];
+
+            let tags_list_expected: Vec<String> = Vec::new();
+            let tags_list_actual = find_similar_tags("xxx", &tag_list);
+            assert_eq!(tags_list_expected, tags_list_actual);
+        }
+
+        // This test might need to be changed since get_close_matches doesn't
+        // seem to preserve order.
+        #[test]
+        fn find_tags_similar_to_Simpson() {
+            let tag_list = [
+                "foobar", "Simson", "simpson", "Frankenstein", "sumpson",
+                "Simpso", "impson", "mpson", "Schneewittchen"
+            ];
+
+            let tags_list_expected: Vec<String> = vec![
+                "Simpso".to_string(), "Simson".to_string(), "impson".to_string(),
+                "simpson".to_string(), "mpson".to_string(), "sumpson".to_string()
+            ];
+
+            let tags_list_actual = find_similar_tags("Simpson", &tag_list);
+            assert_eq!(tags_list_expected, tags_list_actual);
         }
     }
 }
