@@ -223,7 +223,7 @@ mod tests {
         // This test might need to be changed since get_close_matches doesn't
         // seem to preserve order.
         #[test]
-        fn find_tags_similar_to_Simpson() {
+        fn find_tags_similar_to_simpson() {
             let tag_list = [
                 "foobar", "Simson", "simpson", "Frankenstein", "sumpson",
                 "Simpso", "impson", "mpson", "Schneewittchen"
@@ -326,6 +326,103 @@ mod tests {
             let actual_tags = possible_shortcuts(&user_tags, &shortcut_tags);
 
             assert_eq!(expected_tags, actual_tags);
+        }
+    }
+
+    mod test_most_common_keys {
+        use std::collections::{HashSet, HashMap};
+        use crate::filetags::most_common_keys;
+
+        #[test]
+        pub fn sorts_keys_by_value() {
+            let mut tag_counts: HashMap<String, usize> = HashMap::new();
+            tag_counts.insert("key2".to_string(), 45);
+            tag_counts.insert("key1".to_string(), 33);
+
+            let expected_keys = vec![
+                "key2".to_string(),
+                "key1".to_string()
+            ];
+
+            let actual_keys = most_common_keys(
+                tag_counts,
+                9,
+                HashSet::new(),
+                HashSet::new()
+            );
+
+            assert_eq!(expected_keys, actual_keys);
+        }
+
+        #[test]
+        fn yields_top_nine_keys_sorted() {
+            let tag_counts: HashMap<String, usize> = HashMap::from([
+                ("key1".to_string(), 45usize),
+                ("key2".to_string(), 33usize),
+                ("key3".to_string(), 3usize),
+                ("key4".to_string(), 1usize),
+                ("key5".to_string(), 5usize),
+                ("key6".to_string(), 159usize),
+                ("key7".to_string(), 0usize),
+                ("key8".to_string(), 999usize),
+                ("key9".to_string(), 42usize),
+                ("key10".to_string(), 4242usize),
+            ]);
+
+            let expected_keys = vec![
+                "key10".to_string(), "key8".to_string(), "key6".to_string(),
+                "key1".to_string(), "key9".to_string(), "key2".to_string(),
+                "key5".to_string(), "key3".to_string(), "key4".to_string(), 
+            ];
+
+            let actual_keys = most_common_keys(
+                tag_counts,
+                9,
+                HashSet::new(),
+                HashSet::new()
+            );
+
+            assert_eq!(expected_keys, actual_keys);
+        }
+
+        #[test]
+        fn omits_tags_from_list() {
+            let tag_counts: HashMap<String, usize> = HashMap::from([
+                ("key1".to_string(), 45usize),
+                ("key2".to_string(), 33usize),
+                ("key3".to_string(), 3usize),
+                ("key4".to_string(), 1usize),
+                ("key5".to_string(), 5usize),
+                ("key6".to_string(), 159usize),
+                ("key7".to_string(), 0usize),
+                ("key8".to_string(), 999usize),
+                ("key9".to_string(), 42usize),
+                ("key10".to_string(), 4242usize),
+                ("key11".to_string(), 1234usize),
+                ("key12".to_string(), 1234usize),
+                ("key13".to_string(), 1234usize),
+                ("key14".to_string(), 1234usize),
+            ]);
+
+            let tags_to_omit = HashSet::from([
+                "key11", "key3",
+                "key7", "key14"
+            ]);
+
+            let expected_keys = vec![
+                "key10".to_string(), "key12".to_string(), "key13".to_string(),
+                "key8".to_string(), "key6".to_string(), "key1".to_string(),
+                "key9".to_string(), "key2".to_string(), "key5".to_string(), 
+            ];
+
+            let actual_keys = most_common_keys(
+                tag_counts,
+                9,
+                tags_to_omit,
+                HashSet::new()
+            );
+
+            assert_eq!(expected_keys, actual_keys);
         }
     }
 }

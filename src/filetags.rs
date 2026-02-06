@@ -4,6 +4,8 @@ use regex::Regex;
 
 // static YYYY_MM_DD_PATTERN:: &str Regex = Regex::new("^(\\d{4})([01]\\d)([0123]\\d)[- _T]").unwrap();
 
+use std::cmp;
+
 use std::path::Path;
 // use std::error::Error;
 // use std::iter;
@@ -249,4 +251,30 @@ pub fn possible_shortcuts(user_tags: &[&str], shortcut_tags: &[&str]) -> HashSet
     }
 
     found_tags
+}
+
+pub fn most_common_keys(
+    tag_counts: HashMap<String, usize>,
+    n: usize,
+    tags_to_omit: HashSet<&str>,
+    do_not_suggest_tags: HashSet<&str>
+) -> Vec<String> {
+    let mut complete_list: Vec<(String, usize)> = tag_counts.into_iter().collect();
+
+    if !tags_to_omit.is_empty() {
+        complete_list.retain(|x: &(String, usize)| !tags_to_omit.contains(x.0.as_str()));
+    }
+
+    if !tags_to_omit.is_empty() {
+        complete_list.retain(|x: &(String, usize)| !do_not_suggest_tags.contains(x.0.to_lowercase().as_str()));
+    }
+
+    complete_list.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+
+    let n = std::cmp::min(n, complete_list.len());
+
+    complete_list[..n]
+        .iter()
+        .map(|x| x.0.clone())
+        .collect()
 }
