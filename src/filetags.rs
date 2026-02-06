@@ -209,3 +209,44 @@ pub fn find_similar_tags(tag: &str, tags: &[&str]) -> Vec<String> {
         .map(|s| s.to_string())
         .collect()
 }
+
+pub fn possible_shortcuts(user_tags: &[&str], shortcut_tags: &[&str]) -> HashSet<String> {
+    let mut found_tags: HashSet<String> = HashSet::new();
+
+    for curr_tag in user_tags.iter() {
+        if found_tags.contains(*curr_tag) {
+            continue;
+        }
+
+        let curr_tag_str = curr_tag.to_string();
+        if curr_tag.chars().any(|c| !matches!(c, '0'..='9')) {
+            found_tags.insert(curr_tag_str);
+        } else {
+            /*
+            let found_shortcut_tags: HashSet<String> = curr_tag.chars()
+                .map(|c| c.to_digit().map(|d| shortcut_tags.get(d - 1)))
+                .flatten()
+                .map(|s| s.to_string())
+                .collect();
+            */
+
+            let mut found_shortcut_tags: HashSet<String> = HashSet::new();
+            for c in curr_tag_str.chars() {
+                let digit_option = c.to_digit(10);
+                if let Some(d) = digit_option &&
+                   let Some(shortcut_tag) = shortcut_tags.get((d - 1) as usize) {
+                    found_shortcut_tags.insert(shortcut_tag.to_string());
+                } else {
+                    found_tags.insert(curr_tag_str.clone());
+                    break;
+                }
+            }
+
+            if !found_tags.contains(&curr_tag_str) {
+                found_tags.extend(found_shortcut_tags);
+            }
+        }
+    }
+
+    found_tags
+}

@@ -238,4 +238,94 @@ mod tests {
             assert_eq!(tags_list_expected, tags_list_actual);
         }
     }
+
+    mod test_possible_shortcuts {
+        use crate::filetags::possible_shortcuts;
+        use std::collections::HashSet;
+
+        #[test]
+        fn adds_bar() {
+            let user_tags = ["bar"];
+            let shortcut_tags = ["Frankenstein", "Schneewittchen"];
+
+            let mut expected_tags: HashSet<String> = HashSet::new();
+            expected_tags.insert("bar".to_string());
+
+            let actual_tags = possible_shortcuts(&user_tags, &shortcut_tags);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn adds_third_and_fourth_tags() {
+            let user_tags = ["34"];
+            let shortcut_tags = ["Frankenstein", "Schneewittchen", "baz", "bar"];
+
+            let mut expected_tags: HashSet<String> = HashSet::new();
+            expected_tags.insert("baz".to_string());
+            expected_tags.insert("bar".to_string());
+
+            let actual_tags = possible_shortcuts(&user_tags, &shortcut_tags);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn adds_first_and_second_tags() {
+            let user_tags = ["12"];
+            let shortcut_tags = ["Frankenstein", "Schneewittchen", "baz", "bar"];
+
+            let mut expected_tags: HashSet<String> = HashSet::new();
+            expected_tags.insert("Frankenstein".to_string());
+            expected_tags.insert("Schneewittchen".to_string());
+
+            let actual_tags = possible_shortcuts(&user_tags, &shortcut_tags);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn adds_numbers_as_tag_when_out_of_range() {
+            let user_tags = ["59"];
+            let shortcut_tags = ["Frankenstein", "Schneewittchen", "baz", "bar"];
+
+            let mut expected_tags: HashSet<String> = HashSet::new();
+            expected_tags.insert("59".to_string());
+
+            let actual_tags = possible_shortcuts(&user_tags, &shortcut_tags);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn adds_both_tags_and_numbers() {
+            let user_tags = ["baz", "12", "88"];
+            let shortcut_tags = ["Frankenstein", "Schneewittchen", "baz", "bar"];
+
+            let mut expected_tags: HashSet<String> = HashSet::new();
+            expected_tags.insert("baz".to_string());
+            expected_tags.insert("Frankenstein".to_string());
+            expected_tags.insert("Schneewittchen".to_string());
+            expected_tags.insert("88".to_string());
+
+            let actual_tags = possible_shortcuts(&user_tags, &shortcut_tags);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn adds_both_tags_and_numbers_2() {
+            let user_tags = ["19", "88", "baz"];
+            let shortcut_tags = ["Frankenstein", "Schneewittchen", "baz", "bar"];
+
+            let mut expected_tags: HashSet<String> = HashSet::new();
+            expected_tags.insert("19".to_string());
+            expected_tags.insert("88".to_string());
+            expected_tags.insert("baz".to_string());
+
+            let actual_tags = possible_shortcuts(&user_tags, &shortcut_tags);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+    }
 }
