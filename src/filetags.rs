@@ -4,13 +4,12 @@ use regex::Regex;
 
 // static YYYY_MM_DD_PATTERN:: &str Regex = Regex::new("^(\\d{4})([01]\\d)([0123]\\d)[- _T]").unwrap();
 
-use std::cmp;
-
 use std::path::Path;
 // use std::error::Error;
 // use std::iter;
 use std::fmt;
 use std::collections::{HashSet,HashMap};
+use std::ops::BitAnd;
 
 use time::macros::{date, format_description};
 use time::Date;
@@ -75,6 +74,10 @@ impl TaggedFile {
     pub fn remove_tag(&mut self, tag: &str) {
         let tag_str = String::from(tag);
         self.tags.retain(|s| *s != tag_str);
+    }
+
+    pub fn get_tags(&self) -> Vec<String> {
+        self.tags.clone()
     }
 }
 
@@ -277,4 +280,36 @@ pub fn most_common_keys(
         .iter()
         .map(|x| x.0.clone())
         .collect()
+}
+
+pub fn common_tags(file_names: &[&str]) -> HashSet<String> {
+    if file_names.is_empty() {
+        return HashSet::new();
+    }
+
+    let initial_file = TaggedFile::new(file_names[0]);
+    let initial_tags = initial_file.get_tags()
+        .into_iter()
+        .collect::<HashSet<_>>();
+
+    file_names[1..].iter().fold(initial_tags, |acc, file_name| {
+        let tagged_file = TaggedFile::new(file_name);
+        acc.bitand(
+            &tagged_file.get_tags()
+            .into_iter()
+            .collect::<HashSet<_>>()
+        )
+    })
+}
+
+pub fn extract_tags_from_path(path: &Path) -> HashSet<String> {
+    let mut tags: HashSet<String> = HashSet::new();
+    for component in path.iter() {
+        if let Some(s) = component.to_str() {
+            let tagged_file = TaggedFile::new(s);
+            tags.extend(tagged_file.get_tags())
+        }
+    }
+
+    tags
 }

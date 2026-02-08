@@ -425,4 +425,138 @@ mod tests {
             assert_eq!(expected_keys, actual_keys);
         }
     }
+
+    mod test_common_tags {
+        use crate::filetags::common_tags;
+        use std::collections::HashSet;
+
+        #[test]
+        fn returns_no_tags_when_none_present() {
+            let file_names = ["file1.txt"];
+            let expected_tags: HashSet<String> = HashSet::new();
+            let actual_tags = common_tags(&file_names);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn returns_foo_when_foo_present() {
+            let file_names = ["file1__foo.txt"];
+            let expected_tags: HashSet<String> = HashSet::from(["foo".to_string()]);
+            let actual_tags = common_tags(&file_names);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn returns_all_tags_of_single_file() {
+            let file_names = ["file1__foo_bar.txt"];
+            let expected_tags: HashSet<String> = HashSet::from([
+                "foo".to_string(),
+                "bar".to_string()
+            ]);
+
+            let actual_tags = common_tags(&file_names);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn returns_tags_of_one_file_if_other_contains_none() {
+            let file_names = ["file1__foo.txt", "file2.txt"];
+            let expected_tags: HashSet<String> = HashSet::new();
+
+            let actual_tags = common_tags(&file_names);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn returns_foo_when_foo_only_common_tag_between_two_files() {
+            let file_names = ["file1__foo.txt", "file2__foo_bar.txt"];
+            let expected_tags: HashSet<String> = HashSet::from(["foo".to_string()]);
+
+            let actual_tags = common_tags(&file_names);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn returns_foo_when_foo_only_common_tag() {
+            let file_names = [
+                "file1__baz_foo.txt",
+                "file2__foo_bar.txt",
+                "file3__foo_bar_baz.txt",
+                "file4__foo_bar_jodel.txt"
+            ];
+
+            let expected_tags: HashSet<String> = HashSet::from(["foo".to_string()]);
+
+            let actual_tags = common_tags(&file_names);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn returns_foo_and_common_when_both_common_tags() {
+            let file_names = [
+                "file1__common_baz_foo.txt",
+                "file2__common_foo_bar.txt",
+                "file3__common_foo_bar_baz.txt",
+                "file4__common_foo_bar_jodel.txt"
+            ];
+
+            let expected_tags: HashSet<String> = HashSet::from([
+                "foo".to_string(),
+                "common".to_string()
+            ]);
+
+            let actual_tags = common_tags(&file_names);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+    }
+
+    mod test_extract_tags_from_path {
+        use std::path::Path;
+        use std::collections::HashSet;
+        use crate::filetags::extract_tags_from_path;
+
+        #[test]
+        fn extracts_no_tags_from_path_without_tags() {
+            let expected_tags: HashSet<String> = HashSet::new();
+
+            let path = Path::new("/a/path/without/tags");
+            let actual_tags = extract_tags_from_path(&path);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn extracts_tags_from_path_where_tail_has_no_tag() {
+            let expected_tags: HashSet<String> = HashSet::from([
+                "ptag1".to_string(),
+                "ptag2".to_string()
+            ]);
+
+            let path = Path::new("/path__ptag1/with__ptag1_ptag2/tags");
+            let actual_tags = extract_tags_from_path(&path);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+
+        #[test]
+        fn extracts_tag_from_path_where_every_component_has_tags() {
+            let expected_tags: HashSet<String> = HashSet::from([
+                "ptag1".to_string(),
+                "ptag2".to_string(),
+                "ftag1".to_string()
+            ]);
+
+            let path = Path::new("/path__ptag1/with__ptag1_ptag2/tags__ftag1");
+            let actual_tags = extract_tags_from_path(&path);
+
+            assert_eq!(expected_tags, actual_tags);
+        }
+    }
 }
