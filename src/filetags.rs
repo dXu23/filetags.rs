@@ -4,7 +4,10 @@ use regex::Regex;
 
 // static YYYY_MM_DD_PATTERN:: &str Regex = Regex::new("^(\\d{4})([01]\\d)([0123]\\d)[- _T]").unwrap();
 
-use std::path::Path;
+use std::env;
+
+use std::io;
+use std::path::{Path, PathBuf};
 // use std::error::Error;
 // use std::iter;
 use std::fmt;
@@ -312,4 +315,33 @@ pub fn extract_tags_from_path(path: &Path) -> HashSet<String> {
     }
 
     tags
+}
+// This is the same as locate_file_in_cwd_and_parent_directories
+fn find_file_upwards(start_file_name_option: Option<&str>, file_name: &str) -> io::Result<PathBuf> {
+    let binding = env::current_dir()?;
+    let original_dir = binding.as_path();
+    let start_dir = start_file_name_option.map(|s| {
+        let start_file_path = Path::new(s);
+        if start_file_path.is_file() {
+            start_file_path.parent()
+        } else {
+            Some(start_file_path)
+        }
+    }).flatten()
+        .unwrap_or(original_dir)
+        .canonicalize()?;
+
+    for ancestor in start_dir.ancestors() {
+        if !ancestor.exists() {
+            break;
+        }
+
+        let file_path = ancestor.join(file_name);
+
+        if file_path.is_file() {
+            return Ok(file_path)
+        }
+    }
+
+    Err(io::Error::new(io::ErrorKind::NotFound, "Could not find file traversing directories upwards."))
 }
