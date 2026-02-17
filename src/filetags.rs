@@ -345,3 +345,31 @@ fn find_file_upwards(start_file_name_option: Option<&str>, file_name: &str) -> i
 
     Err(io::Error::new(io::ErrorKind::NotFound, "Could not find file traversing directories upwards."))
 }
+
+fn get_invalid_tags(tags: &[&str], vocab: &[&str]) -> Vec<String> {
+    let mut normalized_vocab = HashSet::new();
+
+    for tag in vocab.iter() {
+        if tag.starts_with("-") {
+            normalized_vocab.insert(&tag[1..]);
+        } else {
+            normalized_vocab.insert(&tag);
+        }
+    }
+
+    let mut invalid_tags = Vec::new();
+
+    for raw_tag in tags.iter() {
+        if raw_tag.starts_with("-") {
+            if normalized_vocab.contains(&raw_tag[1..]) {
+                continue;
+            } else {
+                invalid_tags.push(raw_tag[1..].to_string());
+            }
+        }
+
+        invalid_tags.push(raw_tag.to_string());
+    }
+
+    invalid_tags
+}
